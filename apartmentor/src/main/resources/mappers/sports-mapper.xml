@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="sportsMapper">
+	
+	<resultMap id="sportsResultSet" type="reserve">
+		<result column="RESERVE_NO" property="reserveNo" />
+		<result column="START_DATE" property="startDate" />
+		<result column="END_DATE" property="endDate" />
+		<result column="FACILITY" property="facility" />
+		<result column="SEAT_NUMBER" property="seatNo" />
+		<result column="USER_NO" property="userNo" />
+		<result column="STATUS" property="status" />
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="START_DAY" property="startDay" />
+		<result column="USER_NAME" property="userName" />
+	</resultMap>
+	
+	<!-- ************************************golf************************************** -->
+	
+	<select id="selectGolfSeatList" resultMap="sportsResultSet" >
+		SELECT RESERVE_NO, START_DATE, END_DATE, FACILITY, SEAT_NUMBER, R.USER_NO, USER_NAME, R.STATUS, START_DAY, CREATE_DATE
+		FROM RESERVE R, MEMBER M
+		WHERE R.USER_NO = M.USER_NO
+		AND FACILITY = 'GF'
+		AND START_DAY = #{startDay}
+		AND START_DATE = #{startDate}
+	</select>
+	
+	<select id="searchTimeAndDate" resultMap="sportsResultSet">
+		SELECT RESERVE_NO, START_DATE, END_DATE, FACILITY, SEAT_NUMBER, R.USER_NO, USER_NAME, R.STATUS, START_DAY, CREATE_DATE
+		FROM RESERVE R, MEMBER M
+		WHERE R.USER_NO = M.USER_NO
+		AND R.USER_NO = #{userNo}
+		AND FACILITY = 'GF'
+		AND START_DAY = #{startDay}
+		AND START_DATE = #{startDate}
+	</select>
+	
+	<insert id="insertGolfSeat" parameterType="reserve">
+		INSERT 
+		INTO
+				RESERVE
+				(
+				RESERVE_NO, 
+				START_DATE, 
+				END_DATE, 
+				FACILITY, 
+				SEAT_NUMBER, 
+				USER_NO, 
+				STATUS, 
+				START_DAY, 
+				CREATE_DATE
+				)
+		VALUES 
+				(
+				SEQ_RNO.NEXTVAL, 
+				#{startDate}, 
+				null, 
+				'GF', 
+				#{seatNo}, 
+				#{userNo}, 
+				'Y', 
+				#{startDay}, 
+				SYSDATE
+				)
+	</insert>
+	
+	
+	<!-- ************************************MiniGym************************************** -->
+	
+	<select id="selectMiniGymTimeList" resultMap="sportsResultSet">
+		SELECT RESERVE_NO, START_DATE, END_DATE, FACILITY, SEAT_NUMBER, USER_NAME, R.STATUS, START_DAY, CREATE_DATE
+		FROM RESERVE R, MEMBER M
+		WHERE R.USER_NO = M.USER_NO
+		AND FACILITY = 'MG'
+		AND START_DAY = #{startDay}
+	</select>
+	
+	<select id="searchDate" resultMap="sportsResultSet">
+		SELECT RESERVE_NO, START_DATE, END_DATE, FACILITY, SEAT_NUMBER, R.USER_NO, USER_NAME, R.STATUS, START_DAY, CREATE_DATE
+		FROM RESERVE R, MEMBER M
+		WHERE R.USER_NO = M.USER_NO
+		AND R.USER_NO = #{userNo}
+		AND FACILITY = 'MG'
+		AND START_DAY = #{startDay}
+	</select>
+	
+	<insert id="insertMiniGym" parameterType="reserve">
+		INSERT INTO RESERVE
+		VALUES (SEQ_RNO.NEXTVAL, #{startDate}, null, 'MG', null, #{userNo}, 'Y', #{startDay}, SYSDATE)
+	</insert>
+
+	<!-- ************************************이용내역************************************** -->
+	
+	<select id="selectOptionListCount" resultType="_int">
+		<choose>
+			<!-- 관리자면 모든 예약 리스트 갯수 가져오기 -->
+			<when test="userNo == 1">
+				SELECT COUNT(*)
+				FROM
+						RESERVE
+				WHERE	
+						STATUS = 'Y'
+				<if test="category == 'ALL'">
+					AND FACILITY IN ('GF', 'MG')
+				</if>
+				<if test="category == 'GF'">
+					AND
+							FACILITY = 'GF'
+				</if>
+				<if test="category == 'MG'">
+					AND
+							FACILITY = 'MG'
+				</if>
+			</when>
+			<!-- 관리자가 아니면 자기의 예약리스트만 가져온다. -->
+			<otherwise>
+				SELECT COUNT(*)
+				FROM
+						RESERVE
+				WHERE	
+						STATUS = 'Y'
+				<if test="category == 'ALL'">
+					AND FACILITY IN ('GF', 'MG')
+				</if>
+				<if test="category == 'GF'">
+					AND
+							FACILITY = 'GF'
+				</if>
+				<if test="category == 'MG'">
+					AND
+							FACILITY = 'MG'
+				</if>
+					AND 	
+						USER_NO = #{userNo}
+			</otherwise>
+		</choose>	
+	</select>
+	
+
+	<select id="selectOptionList" resultMap="sportsResultSet">
+		<choose>
+			<!-- 관리자면 모든 사람들 예약 리스트 보여준다. -->
+			<when test="userNo == 1">
+				SELECT RESERVE_NO, START_DATE, END_DATE, FACILITY, SEAT_NUMBER, R.USER_NO, USER_NAME, R.STATUS, START_DAY, CREATE_DATE
+				FROM RESERVE R, MEMBER M
+				WHERE R.USER_NO = M.USER_NO
+				AND R.STATUS = 'Y'
+					<if test="category == 'ALL'">
+						AND FACILITY IN ('GF', 'MG')
+					</if>
+					<if test="category == 'GF'">		
+						AND FACILITY = 'GF'
+					</if>
+					<if test="category == 'MG'">
+						AND FACILITY = 'MG'
+					</if>
+				ORDER BY START_DAY, START_DATE ASC
+			</when>
+			<!-- 관리자가 아니면 자기의 예약리스트만 보여준다. -->
+			<otherwise>
+				SELECT RESERVE_NO, START_DATE, END_DATE, FACILITY, SEAT_NUMBER, R.USER_NO, USER_NAME, R.STATUS, START_DAY, CREATE_DATE
+				FROM RESERVE R, MEMBER M
+				WHERE R.USER_NO = M.USER_NO
+				AND R.STATUS = 'Y'
+					<if test="category == 'ALL'">
+						AND FACILITY IN ('GF', 'MG')
+					</if>
+					<if test="category == 'GF'">		
+						AND FACILITY = 'GF'
+					</if>
+					<if test="category == 'MG'">
+						AND FACILITY = 'MG'
+					</if>
+				AND R.USER_NO = #{userNo}
+				ORDER BY START_DAY, START_DATE ASC
+			</otherwise>
+		</choose>
+	</select>
+
+	<delete id="deleteReserveSports">
+		DELETE 
+		FROM RESERVE
+		WHERE RESERVE_NO = #{reserveNo}
+	</delete>
+
+
+
+
+
+
+
+
+
+</mapper>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="regoCarMapper">
+	
+	<resultMap id="regoCarResultSet" type="parking">
+		<result column="CAR_NO" property="carNo" />
+		<result column="CAR_PHONE" property="carPhone" />
+		<result column="STATUS" property="status" />
+		<result column="CAR_DATE" property="carDate" />
+		<result column="USER_NO" property="userNo" />
+		<result column="APT_NO" property="aptNo"/>
+	</resultMap>
+	
+	<insert id="insertRegoCar" parameterType="parking">
+		INSERT INTO PARKING
+		VALUES (#{carNo}, #{carPhone}, 'W', SYSDATE, #{userNo})
+	</insert>
+
+	<select id="selectRegoCarList" resultMap="regoCarResultSet">
+		SELECT CAR_NO, CAR_PHONE, P.STATUS, P.USER_NO, APT_NO
+		FROM PARKING P, MEMBER M
+        WHERE P.USER_NO = M.USER_NO
+		AND M.APT_NO = #{aptNo}
+	</select>
+
+	<delete id="deleteRegoCar" parameterType="parking">
+		DELETE 
+		FROM PARKING
+		WHERE CAR_NO = #{carNo}
+	</delete>
+	
+
+	
+	<!-- ****************관리자 주차 등록******************* -->
+	
+	<select id="adminRegoCarListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM
+				PARKING
+		
+		<if test="category == 'ALL'">
+
+		</if>
+		<if test="category == 'WW'">
+			WHERE
+					STATUS = 'W'
+		</if>
+		<if test="category == 'YY'">
+			WHERE
+					STATUS = 'Y'
+		</if>
+	</select>
+	
+	
+	<select id="adminRegoCarList" resultMap="regoCarResultSet">
+		SELECT CAR_NO, CAR_PHONE, P.STATUS, APT_NO, P.USER_NO
+		FROM PARKING P, MEMBER M
+		WHERE P.USER_NO = M.USER_NO
+		<if test="category == 'ALL'">
+			
+		</if>
+		<if test="category == 'WW'">		
+			AND P.STATUS = 'W'
+		</if>
+		<if test="category == 'YY'">
+			AND P.STATUS = 'Y'
+		</if>
+		ORDER BY CREATE_DATE DESC
+	</select>
+		
+	<update id="appRegoCar" parameterType="parking">
+		UPDATE PARKING
+		SET STATUS = 'Y'
+		WHERE CAR_NO = #{carNo}
+	</update>
+
+
+
+
+
+
+</mapper>

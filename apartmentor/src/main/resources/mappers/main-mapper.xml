@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mainMapper">
+	<resultMap type="board" id="boardResultSet">
+		<result column="BOARD_NO" property="boardNo"/>
+		<result column="BOARD_TITLE" property="boardTitle"/>
+		<result column="CREATE_DATE" property="createDate"/>
+		<result column="BOARD_CATEGORY" property="boardCategory"/>
+	</resultMap>
+	
+	<resultMap type="notice" id="noticeResultSet">
+		<result column="NOTICE_TITLE" property="noticeTitle"/>
+		<result column="NOTICE_CATEGORY" property="noticeCategory"/>
+		<result column="CREATE_DATE" property="createDate"/>
+		<result column="NOTICE_NO" property="noticeNo"/>
+		<result column="NOTICE_CATEGORY_VALUE" property="noticeCategoryValue"/>
+		
+		<result column="NOTICE_CALENDER" property="noticeCalender" />
+		<result column="NOTICE_START_DATE" property="noticeStartDate" />
+		<result column="NOTICE_END_DATE" property="noticeEndDate" />
+		<result column="USER_NO" property="userNo" />
+	</resultMap>
+	
+	<resultMap type="visit" id="visitResultSet">
+		<result column="VISIT_NO" property="visitNo" />
+		<result column="VISIT_CATEGORYE" property="visitCategory" />
+		<result column="VISIT_VALUE" property="visitValue" />
+		<result column="VISIT_DATE" property="visitDate" />
+		<result column="VISIT_TIME" property="visitTime" />
+		<result column="APT_NO" property="aptNo" />
+		<result column="EMAIL" property="visitEmail" />
+		<result column="USER_NO" property="userNo" />
+	</resultMap>
+	
+	<resultMap type="reserve" id="reserveResultSet">
+		<result column="FACILITY" property="facility" />
+		<result column="START_DAY" property="startDay" />
+		<result column="START_DATE" property="startDate" />
+		<result column="END_DATE" property="endDate" />
+		<result column="FACILITY_VALUE" property="facilityValue" />
+		<result column="APT_NO" property="aptNo" />
+		<result column="USER_NO" property="userNo" />
+	</resultMap>
+	
+	<select id="boardList" resultMap="boardResultSet">
+		SELECT 
+			   BOARD_TITLE,
+			   CREATE_DATE,
+			   BOARD_CATEGORY,
+			   BOARD_NO
+		  FROM 
+		       BOARD
+		 WHERE      	   
+			   STATUS = 'Y'
+		 ORDER 
+		    BY	BOARD_NO DESC			
+	</select>
+	
+	<select id="noticeList" resultMap="noticeResultSet">
+		SELECT 
+			   NOTICE_TITLE,
+			   DECODE(NOTICE_CATEGORY, '공지', '[공지]', '알림', '[알림]', '행사', '[행사]') NOTICE_CATEGORY_VALUE,
+			   CREATE_DATE,
+			   NOTICE_NO
+		  FROM 
+		       NOTICE
+		 WHERE      	   
+			   STATUS = 'Y'
+		 ORDER 
+		    BY	NOTICE_NO DESC	
+	</select>
+	
+	<select id="visitReserveList" resultMap="visitResultSet">
+		SELECT
+				VISIT_NO,
+				VISIT_VALUE,
+				VISIT_DATE,
+				VISIT_TIME,
+				APT_NO
+		  FROM
+		  		VISIT
+		  JOIN
+		  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+		  JOIN
+		  		MEMBER USING(USER_NO)
+		 WHERE
+		 		VISIT_STATUS = 'Y'
+		   AND
+		   		USER_NO = #{userNo}
+		 ORDER 
+		    BY	VISIT_DATE ASC, 
+		    	VISIT_TIME ASC
+	</select>
+	
+	
+	<select id="noticeReserveList" resultMap="noticeResultSet">
+		SELECT	
+				NOTICE_NO,
+				NOTICE_CALENDER,
+				NOTICE_START_DATE,
+				NOTICE_END_DATE
+		  FROM
+		  		NOTICE
+		 WHERE
+		 		STATUS = 'Y'
+		 ORDER
+		 	BY  NOTICE_END_DATE ASC
+	</select>
+	
+	<select id="reserveReserveList" resultMap="reserveResultSet">
+		SELECT
+				DECODE(FACILITY, 'st', '독서실', 'MG', '미니짐', 'GF', '골프') FACILITY_VALUE,
+				START_DAY,
+				START_DATE,
+				END_DATE,
+				APT_NO
+		  FROM
+		  		RESERVE R
+		  JOIN
+		  		MEMBER USING(USER_NO)
+		 WHERE
+		 		R.STATUS = 'Y'
+		   AND
+		   		USER_NO = #{userNo}
+		 ORDER
+		 	BY  START_DAY DESC
+	</select>
+	
+</mapper>

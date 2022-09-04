@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="studyMapper">
+
+	<resultMap type="reserve" id="studyResultSet">
+		<result column="RESERVE_NO" property="reserveNo" />
+		<result column="START_DATE" property="startDate" />
+		<result column="END_DATE" property="endDate" />
+		<result column="FACILITY" property="facility" />
+		<result column="SEAT_NUMBER" property="seatNo" />
+		<result column="USER_NO" property="userNo" />
+		<result column="STATUS" property="status" />
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="START_DAY" property="startDay" />
+	</resultMap>
+
+	<insert id="reserveSeat" parameterType="reserve">
+		INSERT
+		  INTO
+		       RESERVE
+		       (
+		       RESERVE_NO,
+		       START_DATE,
+		       END_DATE,
+		       FACILITY,
+		       SEAT_NUMBER,
+		       USER_NO,
+		       STATUS,
+		       CREATE_DATE,
+		       START_DAY
+		       )
+		VALUES
+		       (
+		       SEQ_RNO.NEXTVAL,
+		       #{startDate},
+		       #{endDate},
+		       #{facility},
+		       #{seatNo},
+		       #{userNo},
+		       #{status},
+		       SYSDATE,
+		       SYSDATE		       
+		       )
+	</insert>
+	
+	<select id="selectReserve" resultMap="studyResultSet">
+		SELECT
+		       RESERVE_NO,
+		       START_DATE,
+		       END_DATE,
+		       FACILITY,
+		       SEAT_NUMBER,
+		       USER_NO,
+		       STATUS,
+		       TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+		       START_DAY
+		  FROM
+		       RESERVE
+		 WHERE
+		       USER_NO = #{userNo}
+		   AND
+		       STATUS = 'Y'
+		   AND 
+		       FACILITY = 'st'
+	</select>
+	
+	<select id="selectList" resultMap="studyResultSet">
+		SELECT
+		       RESERVE_NO,
+		       START_DATE,
+		       END_DATE,
+		       FACILITY,
+		       SEAT_NUMBER,
+		       USER_NO,
+		       STATUS,
+		       TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+		       START_DAY
+		  FROM
+		       RESERVE
+		 WHERE
+		       STATUS = 'Y'
+		   AND 
+		       FACILITY = 'st'
+	</select>
+	
+	<select id="selectSeatNoList" resultMap="studyResultSet">
+		SELECT
+		       RESERVE_NO,
+		       START_DATE,
+		       END_DATE,
+		       FACILITY,
+		       SEAT_NUMBER,
+		       USER_NO,
+		       STATUS,
+		       TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+		       START_DAY
+		  FROM
+		       RESERVE
+		 WHERE
+		       SEAT_NUMBER = #{seatNo}
+		   AND
+		       STATUS = 'Y'
+		   AND 
+		       FACILITY = 'st'
+	</select>
+	
+	<update id="updateStatus">
+		update reserve set status = 'N' where TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') != #{today} and facility = 'st'
+	</update>
+	
+	<update id="updateStatusByHour">
+		update reserve set status = 'N' where end_date <![CDATA[ < ]]> #{hour} and facility = 'st'
+	</update>
+	
+	<update id="deleteReserve">
+		update reserve set status = 'N' where user_no = #{userNo} and facility = 'st'
+	</update>
+
+</mapper>

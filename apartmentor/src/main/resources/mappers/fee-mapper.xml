@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="feeMapper">
+
+	<resultMap type="fee" id="feeResultSet">
+		<result column="FEE_NO" property="feeNo" />
+		<result column="APT_NO" property="aptNo" />
+		<result column="FEE_DATE" property="feeDate" />
+		<result column="DUE_DATE" property="dueDate" />
+		<result column="APT_FEE" property="aptFee" />
+	</resultMap>
+	
+	<select id="selectFeeList" resultMap="feeResultSet">
+	   SELECT FEE_NO, f.APT_NO, TO_CHAR(FEE_DATE, 'MM') FEE_DATE, TO_CHAR(DUE_DATE, 'MM') DUE_DATE, APT_FEE
+	     FROM FEE f
+	     JOIN MEMBER a USING(USER_NO)
+	    WHERE f.APT_NO = (SELECT APT_NO
+	    				  FROM MEMBER
+	    				 WHERE USER_NO = #{userNo})
+          AND FEE_DATE BETWEEN TRUNC(ADD_MONTHS(SYSDATE,-3)+1) - TO_CHAR(SYSDATE,'DD')
+          				   AND TRUNC(LAST_DAY(SYSDATE)) + 0.99999421
+	</select>
+	
+	
+</mapper>

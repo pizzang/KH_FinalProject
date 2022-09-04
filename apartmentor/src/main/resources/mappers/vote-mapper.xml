@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="voteMapper">
+
+	<resultMap type="vote" id="voteResultSet">
+		<result column="VOTE_NO" property="voteNo" />
+		<result column="VOTE_TITLE" property="voteTitle" />
+		<result column="VOTE_START" property="voteStart" />
+		<result column="VOTE_END" property="voteEnd" />
+		<result column="VOTE_CREATE" property="voteCreate" />
+		<result column="VOTE_TYPE" property="voteType" />
+		<result column="STATUS" property="status" />
+	</resultMap>
+	
+		<resultMap type="voteItem" id="voteItemResultSet">
+		<result column="ITEM_NO" property="itemNo" />
+		<result column="ITEM_NAME" property="itemName" />
+		<result column="ORIGIN_NAME" property="originName" />
+		<result column="CHANGE_NAME" property="changeName" />
+		<result column="ITEM_COUNT" property="itemCount" />
+		<result column="VOTE_NO" property="voteNo" />
+	</resultMap>
+
+	<insert id="insertVote" parameterType="vote">
+		INSERT 
+		  INTO VOTE
+		  	   (
+		  	   VOTE_NO,
+		  	   VOTE_TITLE,
+		  	   VOTE_START,
+		  	   VOTE_END,
+		  	   VOTE_CREATE,
+		  	   VOTE_TYPE,
+		  	   STATUS
+		  	   )
+		VALUES
+			   (
+			   SEQ_VONO.NEXTVAL,
+			   #{voteTitle},
+			   #{voteStart},
+			   #{voteEnd},
+			   SYSDATE,
+			   #{voteType},
+			   'W'
+			   )
+	</insert>
+	
+	<insert id="insertVoteItem" parameterType="java.util.List">
+		INSERT 
+		  INTO VOTE_ITEM
+		  	   (
+		  	   ITEM_NO,
+		  	   ITEM_NAME,
+		  	   ORIGIN_NAME,
+		  	   CHANGE_NAME,
+		  	   ITEM_COUNT,
+		  	   VOTE_NO
+		  	   )
+			   SELECT SEQ_INO.NEXTVAL, A.* 
+			   FROM(
+		<foreach collection="list" item="item" separator="UNION ALL ">
+			   SELECT	   
+					  #{item.itemName} AS ITEM_NAME,
+					  #{item.originName} AS ORIGIN_NAME,
+					  #{item.changeName} AS CHANGE_NAME,
+					  0 AS ITEM_COUNT,
+					  (SELECT MAX(VOTE_NO) FROM VOTE) AS VOTE_NO
+	 	  	     FROM 
+	 	  	          DUAL
+		</foreach>
+				) A
+	</insert>
+	
+	<update id="setVoteStatus">
+		UPDATE VOTE
+		   SET STATUS = CASE
+ <![CDATA[WHEN VOTE_START <= TO_CHAR(SYSDATE, 'YYYY-MM-DD')]]>
+ <![CDATA[ AND VOTE_END >= TO_CHAR(SYSDATE, 'YYYY-MM-DD')]]>
+          THEN 'Y'
+ <![CDATA[WHEN VOTE_END < TO_CHAR(SYSDATE, 'YYYY-MM-DD')]]>
+          THEN 'N'
+          ELSE 'W'
+		   END
+		  WHERE STATUS != 'X'
+		 
+
+	</update>
+	
+	<select id="selectListCount" resultType="_int">
+	  	SELECT COUNT(*)
+	  	  FROM VOTE
+	  	 WHERE STATUS != 'X'
+	</select>
+	
+	<select id="selectVoteList" resultMap="voteResultSet">
+		SELECT
+			   VOTE_NO,
+			   VOTE_TITLE,
+			   VOTE_START,
+			   VOTE_END,
+			   VOTE_CREATE,
+			   VOTE_TYPE,
+			   STATUS
+		  FROM
+		 	   VOTE
+ 	     WHERE 
+ 	     	   STATUS != 'X'
+         ORDER
+            BY
+               VOTE_NO DESC
+	</select>
+	
+		<select id="selectCategoryListCount" resultType="_int">
+		<if test="category == '진행중'">
+			   SELECT COUNT(*)
+			     FROM VOTE
+				WHERE STATUS = 'Y'
+		</if>
+		<if test="category == '진행예정'">
+			   SELECT COUNT(*)
+			     FROM VOTE
+			   	WHERE STATUS = 'W'
+		</if>
+		<if test="category == '진행완료'">
+			   SELECT COUNT(*)
+			     FROM VOTE
+				WHERE STATUS = 'N'
+		</if>
+		<if test="category == '전체'">
+			   SELECT COUNT(*)
+			     FROM VOTE
+			    WHERE STATUS != 'X'
+		</if>
+	</select>
+	
+	<select id="selectCategoryList" resultMap="voteResultSet">
+		<choose>
+			<when test="category == '진행중'">
+				SELECT
+					   VOTE_NO,
+					   VOTE_TITLE,
+					   VOTE_START,
+					   VOTE_END,
+					   VOTE_CREATE,
+					   VOTE_TYPE,
+					   STATUS
+				  FROM
+				 	   VOTE
+				 WHERE 
+				 	   STATUS = 'Y'	   
+		         ORDER
+		            BY
+		               VOTE_NO DESC
+			</when>
+			<when test="category == '진행예정'">
+				SELECT
+					   VOTE_NO,
+					   VOTE_TITLE,
+					   VOTE_START,
+					   VOTE_END,
+					   VOTE_CREATE,
+					   VOTE_TYPE,
+					   STATUS
+				  FROM
+				 	   VOTE
+				 WHERE 
+				 	   STATUS = 'W'	   
+		         ORDER
+		            BY
+		               VOTE_NO DESC
+			</when>
+			<when test="category == '진행완료'">
+				SELECT
+					   VOTE_NO,
+					   VOTE_TITLE,
+					   VOTE_START,
+					   VOTE_END,
+					   VOTE_CREATE,
+					   VOTE_TYPE,
+					   STATUS
+				  FROM
+				 	   VOTE
+				 WHERE 
+				 	   STATUS = 'N'	   
+		         ORDER
+		            BY
+		               VOTE_NO DESC
+			</when>
+			<when test="category == '전체'">
+				SELECT
+					   VOTE_NO,
+					   VOTE_TITLE,
+					   VOTE_START,
+					   VOTE_END,
+					   VOTE_CREATE,
+					   VOTE_TYPE,
+					   STATUS
+				  FROM
+				 	   VOTE
+				 WHERE 
+				 	   STATUS != 'X'	   
+				 	   
+		         ORDER
+		            BY
+		               VOTE_NO DESC
+			</when>
+		</choose>
+	</select>
+	
+		<select id="searchListCount" parameterType="string" resultType="_int">
+		SELECT COUNT(*)
+		  FROM VOTE
+		  WHERE VOTE_TITLE 
+		  LIKE '%' || #{keyword} || '%'
+	</select>
+	
+  	<select id="selectSearchList" parameterType="string" resultMap="voteResultSet">
+  		SELECT
+			   VOTE_NO,
+			   VOTE_TITLE,
+			   VOTE_START,
+			   VOTE_END,
+			   VOTE_CREATE,
+			   VOTE_TYPE,
+			   STATUS
+		  FROM
+		  		VOTE	
+		 WHERE
+		   		VOTE_TITLE
+		  LIKE
+		  		'%' || #{keyword} || '%'
+		   AND
+		   	    STATUS != 'X'						
+  	</select>
+	<select id="selectVote" resultMap="voteResultSet">
+		SELECT
+			   VOTE_NO,
+			   VOTE_TITLE,
+			   VOTE_START,
+			   VOTE_END,
+			   VOTE_CREATE,
+			   VOTE_TYPE,
+			   STATUS
+		  FROM
+		 	   VOTE
+		 WHERE VOTE_NO = #{voteNo}
+	</select>
+	
+	<select id="selectVoteItem" resultMap="voteItemResultSet">
+		SELECT
+			    ITEM_NO,
+				ITEM_NAME,
+				ORIGIN_NAME,
+				CHANGE_NAME,
+				ITEM_COUNT,
+				VOTE_NO
+		  FROM
+		 	   VOTE_ITEM
+		 WHERE VOTE_NO = #{voteNo}
+	</select>
+	
+	<insert id="submitVote" parameterType="voteItem">
+		INSERT
+		  INTO 
+		  	   VOTE_MEMBER
+		  	   (
+		  	   USER_NO,
+		  	   VOTE_NO,
+		  	   ITEM_NO
+	    	   )
+	    VALUES 
+	    	   (
+	    	   #{userNo},
+	    	   #{voteNo},
+	    	   #{itemNo}
+	    	   )
+	</insert>
+	
+	<select id="chkVoteMember" parameterType="voteItem" resultType="_int">
+	  	SELECT COUNT(*)
+	  	  FROM VOTE_MEMBER
+	  	 WHERE VOTE_NO = #{voteNo}
+	  	   AND USER_NO = #{userNo}
+	</select>
+	
+	<update id="increaseItemCount">
+		UPDATE
+				VOTE_ITEM
+		   SET 
+		   		ITEM_COUNT = ITEM_COUNT + 1
+		 WHERE
+				ITEM_NO = #{itemNo}
+	</update>
+	
+	<select id="totalCount" resultType="_int">
+		SELECT COUNT(*)
+		  FROM VOTE_MEMBER
+		 WHERE VOTE_NO = #{voteNo}
+	</select>
+	
+	<select id="selectVoteMember" resultMap="voteItemResultSet">
+		SELECT
+			   ITEM_NO
+		  FROM
+		       VOTE_MEMBER
+		 WHERE
+		 	   VOTE_NO = #{voteNo}
+		   AND
+		   	   USER_NO = #{userNo}
+		
+	</select>
+	
+	<update id="decreaseItemCount" parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" separator=";" open="DECLARE BEGIN" close="; END;">
+		UPDATE
+				VOTE_ITEM
+		   SET 
+		   		ITEM_COUNT = ITEM_COUNT - 1
+		 WHERE
+				ITEM_NO = #{item.itemNo}
+		</foreach>
+	</update>
+	
+	<delete id="deleteVoteMember">
+		DELETE
+		  FROM
+		  	   VOTE_MEMBER
+ 		 WHERE
+		 	   VOTE_NO = #{voteNo}
+		   AND
+		   	   USER_NO = #{userNo}
+	</delete>
+	
+	<update id="deleteVote">
+		UPDATE
+			   VOTE
+		  SET
+		  	   STATUS = 'X'
+ 		 WHERE
+		 	   VOTE_NO = #{voteNo}
+	</update>
+	
+  
+  
+</mapper>

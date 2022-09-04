@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+	</settings>
+<typeAliases>
+	<typeAlias type="com.kh.apartmentor.member.model.vo.Member" alias="member"/>
+	<typeAlias type="com.kh.apartmentor.board.model.vo.Board" alias="board"/>
+	<typeAlias type="com.kh.apartmentor.visit.model.vo.Visit" alias="visit"/>
+	<typeAlias type="com.kh.apartmentor.board.model.vo.Reply" alias="reply"/>
+	<typeAlias type="com.kh.apartmentor.parking.model.vo.Parking" alias="parking"/>
+	<typeAlias type="com.kh.apartmentor.parkingVisit.model.vo.ParkingVisit" alias="parkingVisit"/>
+	<typeAlias type="com.kh.apartmentor.common.model.vo.Reserve" alias="reserve"/>
+	<typeAlias type="com.kh.apartmentor.visit.model.vo.VisitCategory" alias="visitCategory"/>
+	<typeAlias type="com.kh.apartmentor.notice.model.vo.Notice" alias="notice"/>
+	<typeAlias type="com.kh.apartmentor.chat.model.vo.Chat" alias="chat"/>
+	<typeAlias type="com.kh.apartmentor.vote.model.vo.Vote" alias="vote"/>
+	<typeAlias type="com.kh.apartmentor.vote.model.vo.VoteItem" alias="voteItem"/>
+	<typeAlias type="com.kh.apartmentor.fee.model.vo.Fee" alias="fee"/>
+</typeAliases>
+
+
+	<mappers>
+		<mapper resource="/mappers/member-mapper.xml" />
+		<mapper resource="/mappers/board-mapper.xml" />
+		<mapper resource="/mappers/visit-mapper.xml" />
+		<mapper resource="/mappers/carVisit-mapper.xml" />
+		<mapper resource="/mappers/study-mapper.xml" />
+		<mapper resource="/mappers/sports-mapper.xml" />
+		<mapper resource="/mappers/main-mapper.xml" />
+		<mapper resource="/mappers/notice-mapper.xml" />
+		<mapper resource="/mappers/chat-mapper.xml" />
+		<mapper resource="/mappers/regoCar-mapper.xml" />
+		<mapper resource="/mappers/vote-mapper.xml" />
+		<mapper resource="/mappers/fee-mapper.xml" />
+	</mappers>
+</configuration>

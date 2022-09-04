@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="noticeMapper">
+
+	<resultMap id="noticeResultSet" type="notice">
+		<result column="NOTICE_NO" property="noticeNo" />
+		<result column="USER_NO" property="userNo" />
+		<result column="NOTICE_CATEGORY" property="noticeCategory" />
+		<result column="NOTICE_CONTENT" property="noticeContent" />
+		<result column="NOTICE_TITLE" property="noticeTitle" />
+		<result column="NOTICE_CALENDER" property="noticeCalender" />
+		<result column="NOTICE_START_DATE" property="noticeStartDate" />
+		<result column="NOTICE_END_DATE" property="noticeEndDate" />
+		<result column="ORIGIN_NAME" property="originName" />
+		<result column="CHANGE_NAME" property="changeName" />
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="STATUS" property="status" />
+		<result column="USER_NAME" property="userName" />
+		<result column="NOTICE_CATEGORY_VALUE" property="noticeCategoryValue" />
+	</resultMap>
+	
+	<!-- 공지사항 입력 SQL문 -->
+	<insert id="insertNotice" parameterType="notice">
+		INSERT
+		  INTO
+		  		NOTICE
+		  		(
+		  		NOTICE_NO,
+		  		USER_NO,
+		  		NOTICE_CATEGORY,
+		  		NOTICE_TITLE,
+		  		NOTICE_CALENDER,
+		  		NOTICE_START_DATE,
+		  		NOTICE_END_DATE,
+		  		ORIGIN_NAME,
+		  		CHANGE_NAME,
+		  		NOTICE_CONTENT
+		  		)
+	   VALUES
+	   			(
+	   			SEQ_NNO.NEXTVAL,
+	   			#{userNo},
+	   			#{noticeCategory},
+	   			#{noticeTitle},
+	   			#{noticeCalender},
+	   			#{noticeStartDate},
+	   			#{noticeEndDate},
+	   			#{originName},
+	   			#{changeName},
+	   			#{noticeContent}
+	   			)
+	</insert>
+	
+	<!-- 공지사항 총 게시글 수 조회 SQL문 -->
+	<select id="selectListCount" resultType="_int">
+		SELECT
+				COUNT(*)
+		  FROM 
+		  		NOTICE
+		 WHERE
+		 		STATUS = 'Y'
+	</select>
+	
+	<!-- 공지사항 총 게시글 조회 SQL문 -->
+	<select id="selectList" resultMap="noticeResultSet">
+		SELECT 
+				NOTICE_NO,
+				DECODE(NOTICE_CATEGORY, '공지', '[공지]', '알림', '[알림]', '행사', '[행사]') NOTICE_CATEGORY_VALUE,
+				NOTICE_TITLE,
+				USER_NAME,
+				CREATE_DATE
+		  FROM 
+		  		NOTICE N
+		  JOIN 
+		  		MEMBER USING(USER_NO)
+		 WHERE 
+		 		N.STATUS = 'Y'		  
+         ORDER
+         	BY  NOTICE_NO DESC  
+	</select>
+	
+	<!-- 카테고리 별 공지사항 게시글 수 조회 SQL문 -->
+	<select id="selectCategoryListCount" resultType="_int">
+		<if test="category == '공지'">
+			   SELECT COUNT(*)
+			     FROM NOTICE
+				WHERE NOTICE_CATEGORY = '공지'
+				  AND STATUS = 'Y'
+		</if>
+		<if test="category == '알림'">
+			   SELECT COUNT(*)
+			     FROM NOTICE
+				WHERE NOTICE_CATEGORY = '알림'
+			   	  AND STATUS = 'Y'
+		</if>
+		<if test="category == '행사'">
+			   SELECT COUNT(*)
+			     FROM NOTICE
+				WHERE NOTICE_CATEGORY = '행사'
+				  AND STATUS = 'Y'
+		</if>
+		<if test="category == '전체'">
+			   SELECT COUNT(*)
+			     FROM NOTICE
+			    WHERE STATUS = 'Y'
+		</if>
+	</select>
+	
+	<!-- 카테고리 별 게시글 조회 SQL문 -->
+	<select id="selectCategoryList" resultMap="noticeResultSet">
+		<choose>
+			<when test="category == '공지'">
+				SELECT 
+						NOTICE_NO,
+						DECODE(NOTICE_CATEGORY, '공지', '[공지]') NOTICE_CATEGORY_VALUE,
+						NOTICE_TITLE,
+						USER_NAME,
+						CREATE_DATE
+				  FROM
+				  		NOTICE N
+				  JOIN
+				  		MEMBER USING(USER_NO)
+				 WHERE
+				 		NOTICE_CATEGORY = '공지'
+				   AND 
+				   		N.STATUS = 'Y'
+		         ORDER 
+		         	BY  NOTICE_NO DESC  
+			</when>
+			<when test="category == '알림'">
+				SELECT 
+						NOTICE_NO,
+						DECODE(NOTICE_CATEGORY, '알림', '[알림]') NOTICE_CATEGORY_VALUE,
+						NOTICE_TITLE,
+						USER_NAME,
+						CREATE_DATE
+				  FROM 
+				  		NOTICE N
+				  JOIN 
+				  		MEMBER USING(USER_NO)
+				 WHERE 
+				 		NOTICE_CATEGORY = '알림'
+				   AND 
+				   		N.STATUS = 'Y'
+		         ORDER 
+		            BY  NOTICE_NO DESC  
+			</when>
+			<when test="category == '행사'">
+				SELECT 
+						NOTICE_NO,
+						DECODE(NOTICE_CATEGORY, '행사', '[행사]') NOTICE_CATEGORY_VALUE,
+						NOTICE_TITLE, 
+						USER_NAME,
+						CREATE_DATE
+				  FROM 
+				  		NOTICE N
+				  JOIN 
+				  		MEMBER USING(USER_NO)
+				 WHERE 
+				 		NOTICE_CATEGORY = '행사'
+				   AND 
+				   		N.STATUS = 'Y'
+		         ORDER 
+		         	BY  NOTICE_NO DESC 
+			</when>
+			<when test="category == '전체'">
+				SELECT 
+						NOTICE_NO,
+						DECODE(NOTICE_CATEGORY, '공지', '[공지]', '알림', '[알림]', '행사', '[행사]') NOTICE_CATEGORY_VALUE,
+						NOTICE_TITLE,
+						USER_NAME,
+						CREATE_DATE
+				  FROM
+				  		NOTICE N
+				  JOIN 
+				  		MEMBER USING(USER_NO)
+				 WHERE 
+				 		N.STATUS = 'Y'
+		         ORDER 
+		         	BY  NOTICE_NO DESC
+			</when>
+		</choose>
+	</select>
+	
+	<!-- 검색 결과에 따른 공지사항 게시글 수 조회 SQL문 -->
+	<select id="searchListCount" resultType="_int" parameterType="hashmap">
+		SELECT COUNT(*)
+		  FROM NOTICE
+		 WHERE STATUS = 'Y'
+		<if test="condition == 'title'">
+		  		AND NOTICE_TITLE 
+		 </if>
+		 <if test="condition == 'content'">
+		  		AND NOTICE_CONTENT
+		 </if> 
+		  LIKE '%' || #{keyword} || '%'
+	</select>
+	
+	<!-- 검색 결과에 따른 공지사항 게시글 조회 SQL문 -->
+	<select id="searchList" resultMap="noticeResultSet" parameterType="hashmap">
+		SELECT
+				NOTICE_NO,
+				DECODE(NOTICE_CATEGORY, '공지', '[공지]', '알림', '[알림]', '행사', '[행사]') NOTICE_CATEGORY_VALUE,
+				NOTICE_TITLE,
+				USER_NAME,
+				CREATE_DATE
+		  FROM 
+		  		NOTICE N
+		  JOIN 
+		  		MEMBER USING(USER_NO)
+		 WHERE 
+		 		N.STATUS = 'Y'
+		 <if test="condition == 'title'">
+		  		AND NOTICE_TITLE 
+		 </if>
+		 <if test="condition == 'content'">
+		  		AND NOTICE_CONTENT
+		 </if>
+		  LIKE 
+		  		'%' || #{keyword} || '%' 		  
+         ORDER 
+         	BY  NOTICE_NO DESC
+	</select> 
+	
+	<!-- 해당 공지사항의 상세 조회 SQL문 -->
+	<select id="selectNotice" resultMap="noticeResultSet">
+		SELECT
+				NOTICE_NO,
+			   	DECODE(NOTICE_CATEGORY, '공지', '[공지]', '알림', '[알림]', '행사', '[행사]') NOTICE_CATEGORY_VALUE,
+			   	NOTICE_CATEGORY,
+			   	NOTICE_TITLE,
+			   	NOTICE_CALENDER,
+			   	TO_CHAR(NOTICE_START_DATE, 'YYYY-MM-DD') as "NOTICE_START_DATE",
+			   	TO_CHAR(NOTICE_END_DATE, 'YYYY-MM-DD') as "NOTICE_END_DATE",
+			   	CHANGE_NAME,
+			   	ORIGIN_NAME,
+			   	NOTICE_CONTENT
+		 FROM
+				NOTICE
+	    WHERE
+	    	    NOTICE_NO = #{noticeNo}
+	      AND
+	      	    STATUS = 'Y'
+	</select>
+	
+	<!-- 공지사항 수정시 입력 SQL문 -->
+	<update id="updateNotice" parameterType="notice">
+		UPDATE
+		  		NOTICE
+		   SET
+		  		NOTICE_CATEGORY = #{noticeCategory},
+		  		NOTICE_TITLE = #{noticeTitle},
+		  		NOTICE_CALENDER = #{noticeCalender},
+		  		NOTICE_START_DATE = #{noticeStartDate}, 
+		  		NOTICE_END_DATE = #{noticeEndDate},
+		  		ORIGIN_NAME = #{originName},
+		  		CHANGE_NAME = #{changeName},
+		  		NOTICE_CONTENT = #{noticeContent}
+		WHERE
+				NOTICE_NO = #{noticeNo}
+	</update>
+	
+	<!-- 공지사항 삭제 SQL문 -->
+	<update id="deleteNotice" parameterType="_int">
+		UPDATE
+				NOTICE
+		   SET
+		   		STATUS = 'N'
+		 WHERE
+		 		NOTICE_NO = #{noticeNo}
+	</update>
+	
+</mapper>

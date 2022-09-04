@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="boardMapper">
+  
+  	<resultMap type="board" id="boardResultSet">
+		<result column="BOARD_NO" property="boardNo"/>
+		<result column="BOARD_TITLE" property="boardTitle"/>
+		<result column="BOARD_CONTENT" property="boardContent"/>
+		<result column="BOARD_WRITER" property="boardWriter"/>
+		<result column="ORIGIN_NAME" property="originName"/>
+		<result column="CHANGE_NAME" property="changeName"/>
+		<result column="COUNT" property="count"/>
+		<result column="CREATE_DATE" property="createDate"/>
+		<result column="STATUS" property="status"/>
+		<result column="BOARD_CATEGORY" property="boardCategory"/>
+		<result column="USER_NO" property="userNo"/>
+	</resultMap>
+	
+	<resultMap type="reply" id="replyResultSet">
+		<result column="REPLY_NO" property="replyNo"/>
+		<result column="REPLY_CONTENT" property="replyContent"/>
+		<result column="REPLY_WRITER" property="replyWriter"/>
+		<result column="REF_BNO" property="refBno"/>
+		<result column="CREATE_DATE" property="createDate"/>
+		<result column="STATUS" property="status"/>
+		<result column="USER_NO" property="userNo"/>
+	</resultMap>
+  
+	<!-- 게시글 총 갯수 조회 쿼리문 -->
+	<select id="selectListCount" resultType="_int">
+	  	SELECT COUNT(*)
+	  	  FROM BOARD
+	  	 WHERE STATUS = 'Y'
+	</select>
+	
+	<!-- 한 화면에 보여줄 게시글 리스트 조회 쿼리문 -->
+	<select id="selectList" resultMap="boardResultSet">
+		SELECT
+				BOARD_NO,
+				BOARD_TITLE,
+				BOARD_WRITER,
+				TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+				BOARD_CATEGORY,
+				COUNT
+		 FROM
+		 		BOARD
+		WHERE
+				STATUS = 'Y'
+		ORDER
+		   BY	BOARD_NO DESC				
+	</select>  
+  
+	<!-- 해당 게시글 조회수 증가 쿼리문 --> 
+  	<update id="increaseCount" parameterType="_int">
+  		UPDATE
+  				BOARD
+  		   SET
+  		   		COUNT = COUNT + 1
+  		 WHERE
+  		 		BOARD_NO = #{boardNo}
+  		   AND
+  		   		STATUS = 'Y'		
+  	</update>
+	
+	<!-- 해당 게시글 상세조회 쿼리문 -->  
+  	<select id="selectBoard" parameterType="_int" resultMap="boardResultSet">
+  		SELECT
+  				BOARD_NO,
+				BOARD_TITLE,
+				BOARD_CONTENT,
+				BOARD_WRITER,
+				ORIGIN_NAME,
+				CHANGE_NAME,
+				COUNT,
+				TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+				BOARD_CATEGORY,
+				USER_NO
+		  FROM
+		  		BOARD
+		 WHERE				
+				STATUS = 'Y'		
+		   AND
+		   		BOARD_NO = #{boardNo}		
+  	</select>
+  
+  	<!-- 댓글 조회 쿼리문 -->
+  	<select id="selectReplyList" parameterType="_int" resultMap="replyResultSet">
+  		SELECT
+  				REPLY_NO,
+  				REPLY_CONTENT,
+  				REPLY_WRITER,
+  				TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+  				USER_NO
+  		  FROM
+  		  		REPLY
+  		 WHERE
+  		 		STATUS = 'Y'
+  		   AND
+  		 		REF_BNO = #{bno}
+  		 ORDER
+  		    BY	REPLY_NO ASC  				 				
+  	</select>
+  
+	<!-- 검색한 게시글의 총 갯수 조회 쿼리문 -->
+  	<select id="selectSearchCount" parameterType="string" resultType="_int">
+  		SELECT 
+  				COUNT(*)
+  		  FROM
+  		  		BOARD
+  		 WHERE
+  		 		STATUS = 'Y'
+  		   AND
+  		   		BOARD_TITLE		
+  		  LIKE
+  		  		'%' || #{keyword} || '%'
+  	</select>
+  
+  	<!-- 검색한 게시글 리스트 조회 쿼리문 -->
+  	<select id="selectSearchList" parameterType="string" resultMap="boardResultSet">
+  		SELECT
+  				BOARD_NO,
+				BOARD_TITLE,
+				BOARD_WRITER,
+				TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+				BOARD_CATEGORY,
+				COUNT
+		  FROM
+		  		BOARD	
+		 WHERE
+		 		STATUS = 'Y'
+		   AND
+		   		BOARD_TITLE
+		  LIKE
+		  		'%' || #{keyword} || '%'						
+  	</select>
+  
+  	<!-- 선택한 말머리가 위에 오게 리스트 추출 -->
+  	<select id="selectOption" parameterType="string" resultMap="boardResultSet">
+  		SELECT
+  				BOARD_NO,
+				BOARD_TITLE,
+				BOARD_WRITER,
+				TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE",
+				BOARD_CATEGORY,
+				COUNT
+		  FROM
+		  		BOARD	
+		 WHERE
+		 		STATUS = 'Y'
+		<if test="option == 'general'">
+		 ORDER
+		    BY  	
+		DECODE	(BOARD_CATEGORY, '[일반]', 1)
+		</if>					
+		<if test="option == 'mom'">
+		 ORDER
+		    BY
+	    DECODE	(BOARD_CATEGORY, '[맘]', 1)	   
+		</if>
+		<if test="option == 'suggest'">
+		 ORDER
+		    BY
+	    DECODE	(BOARD_CATEGORY, '[건의]', 1)	   
+		</if>
+		<if test="option == 'sell'">
+		 ORDER
+		    BY
+	    DECODE	(BOARD_CATEGORY, '[판매]', 1)	   
+		</if>
+  		<if test="option == 'infor'">
+		 ORDER
+		    BY
+	    DECODE	(BOARD_CATEGORY, '[정보]', 1)	   
+		</if>
+  	</select>
+  
+  	<!-- 댓글 작성 쿼리문 -->
+  	<insert id="insertReply" parameterType="reply">
+  		INSERT
+  		  INTO
+  		  		REPLY
+  		  		(
+  		  		REPLY_NO,
+		  		REPLY_CONTENT,
+		  		REPLY_WRITER,
+		  		REF_BNO,
+		  		USER_NO
+  		  		)
+  		VALUES	
+  				(
+  				SEQ_BRNO.NEXTVAL,
+  				#{replyContent},
+  				#{replyWriter},
+  				#{refBno},
+  				#{userNo}
+  				)	
+  	</insert>
+  
+  	<!-- 댓글 삭제 쿼리문 -->
+  	<update id="deleteReply" parameterType="_int">
+  		UPDATE
+  				REPLY
+  		   SET
+  		   		STATUS = 'N'
+  		 WHERE
+  		 		REPLY_NO = #{replyNo} 				
+  	</update>
+  	
+  	<!-- 게시글 작성 쿼리문 -->
+  	<insert id="insertBoard" parameterType="board">
+  		INSERT
+  		  INTO
+  		  		BOARD
+  		  		(
+  		  		BOARD_NO,
+  		  		BOARD_TITLE,
+  		  		BOARD_CONTENT,
+  		  		BOARD_WRITER,
+  		  		ORIGIN_NAME,
+  		  		CHANGE_NAME,
+  		  		BOARD_CATEGORY,
+  		  		USER_NO
+  		  		)
+  		VALUES
+  				(
+  				SEQ_BNO.NEXTVAL,
+  				#{boardTitle},
+  				#{boardContent},
+  				#{boardWriter},
+  				#{originName},
+  				#{changeName},
+  				<if test="boardCategory == 'general'">
+				'[일반]',  
+				</if>
+  				<if test="boardCategory == 'mom'">
+		   		'[맘]',
+				</if>
+				<if test="boardCategory == 'suggest'">
+				'[건의]',  
+				</if>
+				<if test="boardCategory == 'sell'">
+				'[판매]',   
+				</if>
+		  		<if test="boardCategory == 'infor'">
+				'[정보]',  
+				</if>
+  				#{userNo}
+  				)  		
+  	</insert>
+  	
+  	<!-- 게시글 삭제 쿼리문 -->
+  	<update id="deleteBoard" parameterType="_int">
+  		UPDATE
+  				BOARD
+  		   SET
+  		   		STATUS = 'N'
+  		 WHERE
+  		 		BOARD_NO = #{boardNo} 
+  	</update>
+  	
+  	<!-- 게시글 수정 쿼리문 -->
+  	<update id="updateBoard">
+  		UPDATE
+  				BOARD
+  		   SET
+  		   		BOARD_TITLE = #{boardTitle},
+  		   		BOARD_CONTENT = #{boardContent},
+  		   		ORIGIN_NAME = #{originName},
+			   	CHANGE_NAME = #{changeName}
+		 WHERE
+		 		BOARD_NO = #{boardNo}	   			
+  	
+  	</update>
+  
+</mapper>

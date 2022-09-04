@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="chatMapper">
+ 	
+ 	<resultMap type="chat" id="chatResultSet">
+ 		<result column="CHAT_NO" property="chatNo"/>
+ 		<result column="CHAT_CONTENT" property="chatContent"/>
+ 		<result column="CHAT_SENDDATE" property="chatSendDate"/>
+ 		<result column="CHAT_SENDTIME" property="chatSendTime"/>
+ 		<result column="CHAT_CODE" property="chatCode"/>
+ 		<result column="CHAT_WRITER" property="chatWriter"/>
+ 	</resultMap>
+ 
+ 	<resultMap type="member" id="MemberResultMap">
+		<result column="USER_NO" property="userNo"/>    		
+		<result column="USER_ID" property="userId"/>    	
+		<result column="USER_NAME" property="userName"/>    
+		<result column="STATUS" property="status"/> 
+		<result column="APT_NO" property="aptNo"/> 
+	</resultMap>
+ 
+ 
+ 	<!-- 채팅리스트 조회 쿼리문 -->
+ 	<select id="selectChatList" resultMap="chatResultSet">
+ 		SELECT
+ 				CHAT_NO,
+ 				CHAT_CONTENT,
+ 				TO_CHAR(CHAT_SENDTIME, 'YYYY"년 "MM"월 "DD"일 "DAY') AS "CHAT_SENDDATE",
+ 				TO_CHAR(CHAT_SENDTIME, 'AM HH:MI') AS "CHAT_SENDTIME",
+ 				CHAT_CODE,
+ 				CHAT_WRITER
+ 		  FROM
+ 		  		CHAT
+ 		 WHERE
+ 		 		CHAT_CODE = 1 				
+ 	</select>
+ 	
+ 	<!-- 주민채팅방 채팅 작성 쿼리문 -->
+ 	<insert id="insertChat" parameterType="chat">
+ 		INSERT 
+ 		  INTO	
+ 		  		CHAT
+ 		VALUES	
+ 				(
+ 				SEQ_CHNO.NEXTVAL,
+ 				#{chatContent}, 
+ 				SYSDATE, 
+ 				#{chatCode}, 
+ 				#{chatWriter}, 
+ 				#{userNo}
+ 				)
+ 	</insert>
+ 	
+ 	<!-- 멤버 조회 쿼리문(관리 제외) -->
+ 	<select id="selectMemberList" resultMap="MemberResultMap">
+ 		SELECT
+ 				USER_NO,
+ 				USER_ID,
+ 				USER_NAME,
+ 				APT_NO,
+ 				STATUS
+ 		  FROM
+ 		  		MEMBER
+ 		 WHERE
+ 		 		STATUS = 'Y'
+ 		   AND NOT USER_NO = 1		 				
+ 				
+ 	</select>
+ 	
+ 	<!-- 채팅날짜 중복값없이 조회 쿼리문 -->
+ 	<select id="selectSendDateList" resultMap="chatResultSet">
+ 		SELECT 
+ 				CHAT_SENDDATE
+		  FROM  ( 
+		  		SELECT DISTINCT TO_CHAR(CHAT_SENDTIME, 'YYYY"년 "MM"월 "DD"일 "DAY') AS "CHAT_SENDDATE" 
+		 		  FROM CHAT 
+		 		 WHERE CHAT_CODE = 1
+		 		)
+		ORDER BY CHAT_SENDDATE ASC
+ 	</select>
+ 	
+ 	<!-- 관리실 채팅내역 조회 쿼리문 -->
+ 	<select id="selectGuardChatList" resultMap="chatResultSet">
+ 		SELECT 
+ 				CHAT_CONTENT, 
+ 				TO_CHAR(CHAT_SENDTIME, 'AM HH:MI') AS "CHAT_SENDTIME", 
+ 				CHAT_WRITER
+		  FROM 
+		  		CHAT
+		 WHERE 
+		 		CHAT_CODE = 2
+		   AND 
+		   		USER_NO = #{userNo} 
+ 	</select>
+ 	
+ 	<!-- 관리실 채팅 작성 쿼리문 -->
+ 	<insert id="guardChatInsert" parameterType="chat">
+ 		INSERT
+ 		  INTO
+ 		  		CHAT
+ 		VALUES
+ 				(
+ 				SEQ_CHNO.NEXTVAL,
+ 				#{chatContent},
+ 				SYSDATE,
+ 				2,
+ 				#{chatWriter},
+ 				#{userNo}
+ 				)	
+ 	</insert>
+ 	
+ 	
+ 
+</mapper>

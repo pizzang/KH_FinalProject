@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="visitMapper">
+	
+	<resultMap id="visitResultSet" type="visit">
+		<result column="VISIT_NO" property="visitNo" />
+		<result column="VISIT_CATEGORY" property="visitCategory" />
+		<result column="USER_NO" property="userNo" />
+		<result column="VISIT_DATE" property="visitDate" />
+		<result column="VISIT_STATUS" property="visitStatus" />
+		<result column="VISIT_CONTENT" property="visitContent" />
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="VISIT_TIME" property="visitTime" />
+		<result column="VISIT_VALUE" property="visitValue" />
+		<result column="APT_NO" property="aptNo" />
+		<result column="EMAIL" property="visitEmail" />
+		<result column="VISIT_STATUS_VALUE" property="visitStatusValue" />
+	</resultMap>
+	
+	<resultMap id="visitCategoryResultSet" type="visitCategory">
+		<result column="VISIT_CATEGORY" property="visitCategory" />
+		<result column="VISIT_VALUE" property="visitValue" />
+	</resultMap>
+
+	<!-- 방문 예약 입력 SQL문 -->
+	<insert id="insertVisitReserve" parameterType="visit">
+		INSERT
+		  INTO
+		  		VISIT
+		  		(
+		  		VISIT_NO,
+		  		USER_NO,
+		  		VISIT_CATEGORY,
+		  		VISIT_DATE,
+		  		VISIT_TIME,
+		  		VISIT_CONTENT
+		  		)
+		VALUES
+				(
+				SEQ_VNO.NEXTVAL,
+				#{userNo},
+				#{visitCategory},
+				#{visitDate},
+				#{visitTime},
+				#{visitContent}				
+				)
+	</insert>
+	
+	<!-- 방문 예약 카테고리 조회 SQL문 -->
+	<select id="selectVisitCategory" resultMap="visitCategoryResultSet">
+		SELECT
+				VISIT_CATEGORY,
+				VISIT_VALUE
+		  FROM
+		  		VISIT_CATEGORY
+	</select>
+	
+	<!-- 로그인한 입주자와 동일한 동의 예약 날짜 / 시간 조회 SQL문  -->
+	<select id="selectVisitReserve" parameterType="_int" resultMap="visitResultSet"> 
+		SELECT 
+				SUBSTR(APT_NO, 1, 2),
+				VISIT_DATE,
+				VISIT_TIME,
+				VISIT_CATEGORY,
+				VISIT_VALUE
+		  FROM
+		  		VISIT
+		  JOIN
+		  		MEMBER USING(USER_NO)
+		  JOIN
+		  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+		 WHERE
+		 		SUBSTR(APT_NO, 1, 2) = (SELECT
+		 				  					   SUBSTR(APT_NO, 1, 2)
+		           				         FROM 
+		                   					   MEMBER
+		                   				WHERE
+		                  		 			   USER_NO = #{userNo})
+		   AND 
+		   		VISIT_STATUS = 'Y'
+		 ORDER 
+		 	BY  VISIT_DATE ASC
+	</select>
+	
+	<!-- 로그인한 입주자와 동일한 동의 예약 날짜 / 시간 중복 조회 SQL문  -->
+	<select id="checkVisitReserve" parameterType="visit" resultMap="visitResultSet">
+		SELECT
+				VISIT_CATEGORY,
+				VISIT_DATE,
+				VISIT_TIME
+		  FROM
+		  		VISIT
+		  JOIN
+		  		MEMBER USING(USER_NO)
+		 WHERE
+		 		SUBSTR(APT_NO, 1, 2) = (SELECT
+		 				  				        SUBSTR(APT_NO, 1, 2)
+		                    			  FROM
+		                    	 			    MEMBER
+		               				     WHERE
+		                   		 				USER_NO = #{userNo})
+		   AND
+		   		VISIT_STATUS = 'Y'
+		   AND
+		   		VISIT_CATEGORY = #{visitCategory}
+		   AND 
+		   		VISIT_DATE = #{visitDate}
+		   AND 
+		   		VISIT_TIME = #{visitTime}
+	</select>
+	
+	<!-- 모든 예약의 날짜 / 시간 조회 SQL문 -->
+	<select id="selectVisitReserveAll" resultMap="visitResultSet">
+		SELECT
+				APT_NO,
+				VISIT_DATE,
+				VISIT_TIME,
+				VISIT_CATEGORY,
+				VISIT_VALUE
+		  FROM
+		  		VISIT
+		  JOIN
+		  		MEMBER USING(USER_NO)		  
+		  JOIN 
+		  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+		 WHERE
+		 		VISIT_STATUS = 'Y'
+	     ORDER 
+	     	BY  VISIT_DATE ASC
+	</select>
+
+	<!-- 방문 예약 수 조회 SQL문 -->
+	<select id="selectListCount" resultType="_int">
+		SELECT
+				COUNT(*)
+		  FROM
+		  		VISIT
+	</select>
+	
+	<!-- 방문 예약 리스트 조회 SQL문 -->
+	<select id="selectList" resultMap="visitResultSet">
+		SELECT
+				VISIT_NO,
+				VISIT_VALUE,
+				APT_NO,
+				DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE,
+				CREATE_DATE
+		  FROM 
+		  		VISIT
+		  JOIN 
+		  		MEMBER USING(USER_NO)		  
+		  JOIN 
+		  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+		 ORDER 
+		 	BY  CREATE_DATE DESC
+	</select>
+	
+	<!-- 카테고리 별 방문 예약 수 조회 SQL문 -->
+	<select id="selectCategoryListCount" resultType="_int">
+			<if test="category == '가스'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+				WHERE
+					   VISIT_CATEGORY = 1
+			</if>
+			<if test="category == '난방'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM 
+			     	   VISIT
+				WHERE 
+					   VISIT_CATEGORY = 2
+			</if>
+			<if test="category == '소독'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+				WHERE
+					   VISIT_CATEGORY = 3
+			</if>
+			<if test="category == '수도'">
+			   SELECT 
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT	
+				WHERE 
+				       VISIT_CATEGORY = 4
+			</if>
+			<if test="category == '전기'">
+			   SELECT 
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+				WHERE 
+					   VISIT_CATEGORY = 5
+			</if>
+			<if test="category == '전체'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT			
+			</if>
+
+	</select>
+	
+	<!-- 카테고리 별 방문 예약 리스트 조회 SQL문 -->
+	<select id="selectCategoryList" resultMap="visitResultSet">
+		<choose>
+			<when test="category == '가스'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_CATEGORY = 1
+				 ORDER 
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="category == '난방'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_CATEGORY = 2
+				 ORDER
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="category == '소독'">
+				SELECT 
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE, 
+						CREATE_DATE
+				  FROM 
+				  		VISIT
+				  JOIN 
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_CATEGORY = 3
+				 ORDER
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="category == '수도'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM 
+				  		VISIT
+				  JOIN 
+				  		MEMBER USING(USER_NO)		  
+				  JOIN 
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE 
+				 		VISIT_CATEGORY = 4
+				 ORDER 
+				 	BY 
+				 		CREATE_DATE DESC
+			</when>
+			<when test="category == '전기'">
+				SELECT 
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_CATEGORY = 5
+				 ORDER
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="category == '전체'">
+				SELECT 
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 ORDER
+				 	BY  CREATE_DATE DESC
+			</when>
+		</choose>
+	</select>
+	
+	<!-- 예약 상태 별 방문 예약 수 조회 SQL문 -->
+	<select id="selectStatusListCount" resultType="_int">
+			<if test="statusCategory == '승인'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+				WHERE
+					   VISIT_STATUS = 'Y'
+			</if>
+			<if test="statusCategory == '취소'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+				WHERE
+					   VISIT_STATUS = 'N'
+			</if>
+			<if test="statusCategory == '대기'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+				WHERE
+					   VISIT_STATUS = 'W'
+			</if>
+			<if test="statusCategory == '취소대기'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+				WHERE
+					   VISIT_STATUS = 'C'
+			</if>
+			<if test="statusCategory == '전체'">
+			   SELECT
+			   		   COUNT(*)
+			     FROM
+			     	   VISIT
+			</if>
+	</select>
+	
+	<!-- 예약 상태 별 방문 예약 리스트 조회 SQL문 -->
+	<select id="selectStatusList" resultMap="visitResultSet">
+		<choose>
+			<when test="statusCategory == '승인'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_STATUS = 'Y'
+				 ORDER 
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="statusCategory == '취소'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'N', '예약 취소') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_STATUS = 'N'
+				 ORDER 
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="statusCategory == '대기'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'W', '예약 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_STATUS = 'W'
+				 ORDER 
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="statusCategory == '취소대기'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'C', '취소 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 WHERE
+				 		VISIT_STATUS = 'C'
+				 ORDER 
+				 	BY  CREATE_DATE DESC
+			</when>
+			<when test="statusCategory == '전체'">
+				SELECT
+						VISIT_NO,
+						VISIT_VALUE,
+						APT_NO,
+						DECODE(VISIT_STATUS, 'Y', '예약 승인', 'W', '예약 대기', 'N', '예약 취소', 'C', '취소 대기') VISIT_STATUS_VALUE,
+						CREATE_DATE
+				  FROM
+				  		VISIT
+				  JOIN
+				  		MEMBER USING(USER_NO)		  
+				  JOIN
+				  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+				 ORDER 
+				 	BY  CREATE_DATE DESC
+			</when>	
+		</choose>
+	</select>
+	
+	<!-- 해당 방문 예약 상세보기 조회 SQL문 -->
+	<select id="selectVisit" resultMap="visitResultSet">
+		SELECT
+				VISIT_NO,
+				VISIT_VALUE,
+				APT_NO,
+				VISIT_DATE,
+				VISIT_TIME,
+				CREATE_DATE,
+				USER_NO,
+				VISIT_CONTENT,
+				VISIT_STATUS,
+				EMAIL
+		  FROM
+		  		VISIT
+		  JOIN
+		  		MEMBER USING(USER_NO)		  
+		  JOIN
+		  		VISIT_CATEGORY USING(VISIT_CATEGORY)
+		 WHERE
+		 		VISIT_NO = #{visitNo}
+	</select>
+	
+	<!-- 예약 승인 SQL문 -->
+	<update id="okReserveStatus" parameterType="_int">
+		UPDATE
+				VISIT
+		   SET
+		   		VISIT_STATUS = 'Y'
+		 WHERE
+		 		VISIT_NO = #{visitNo}
+	</update>
+	
+	<!-- 예약 반려 SQL문 -->
+	<update id="noReserveStatus" parameterType="_int">
+		UPDATE
+				VISIT
+		   SET
+		   		VISIT_STATUS = 'N'
+		 WHERE
+		 		VISIT_NO = #{visitNo}
+	</update>
+	
+	<!-- 예약 취소 신청 SQL문 -->
+	<update id="cancelStatus" parameterType="_int">
+		UPDATE
+				VISIT
+		   SET
+		   		VISIT_STATUS = 'C'
+		 WHERE
+		 		VISIT_NO = #{visitNo}
+	</update>
+	
+	<!-- 예약 취소 승인 SQL문 -->
+	<update id="cancelReserveStatus" parameterType="_int">
+		UPDATE
+				VISIT
+		   SET
+		   		VISIT_STATUS = 'N'
+		 WHERE
+		 		VISIT_NO = #{visitNo}
+	</update>
+	
+</mapper>

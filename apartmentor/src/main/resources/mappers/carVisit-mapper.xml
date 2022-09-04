@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="visitCarMapper">
+
+   <resultMap id="visitCarResultSet" type="parkingVisit">
+      <result column="CAR_NO" property="carNo" />
+      <result column="VISITCAR_PHONE" property="visitCarPhone" />
+      <result column="VISITCAR_DATE" property="visitCarDate" />
+      <result column="PURPOSE" property="purpose" />
+      <result column="STATUS" property="status" />
+      <result column="USER_NO" property="userNo" />
+      <result column="APT_NO" property="aptNo"/>
+   </resultMap>
+   
+  
+   
+   <select id="selectVisitCar" resultType="_int">
+      SELECT COUNT(*) 
+        FROM PARKING_VISIT 
+       WHERE CAR_NO = #{carNo}
+       AND visitcar_date = #{visitCarDate}
+   </select>
+
+   <insert id="enrollVisitCar" parameterType="parkingVisit">
+      INSERT
+        INTO
+              PARKING_VISIT
+              (VISITCAR_NO, CAR_NO, VISITCAR_PHONE, VISITCAR_DATE, PURPOSE, STATUS, USER_NO)
+      VALUES
+             (SEQ_VCNO.NEXTVAL, #{carNo}, #{visitCarPhone}, #{visitCarDate}, #{purpose}, 'W', #{userNo})
+   </insert>
+   
+   <update id="setDayVisitCar">
+       UPDATE PARKING_VISIT
+          SET STATUS = CASE
+         WHEN VISITCAR_DATE = TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+         THEN 'Y'
+<![CDATA[WHEN VISITCAR_DATE > TO_CHAR(SYSDATE, 'YYYY-MM-DD')]]>
+         THEN 'W'
+         ELSE 'N'
+          END
+   </update>
+   
+   	<select id="selectVisitCarList" resultMap="visitCarResultSet">
+      SELECT VISITCAR_NO, CAR_NO, VISITCAR_PHONE, TO_CHAR(VISITCAR_DATE, 'YYYY-MM-DD') AS VISITCAR_DATE, PURPOSE, P.STATUS, APT_NO, P.USER_NO
+      FROM PARKING_VISIT P, MEMBER M
+      WHERE P.USER_NO = M.USER_NO
+      AND M.APT_NO = #{aptNo}
+      AND P.STATUS IN('Y','W')
+      ORDER BY VISITCAR_DATE ASC
+	</select>
+
+   
+   <!-- ********************관리자 방문예약 ********************** -->
+   <select id="adminVisitCarListCount" resultType="_int">
+      SELECT COUNT(*)
+      FROM
+            PARKING_VISIT
+   </select>
+   
+   <select id="adminVisitCarList" resultMap="visitCarResultSet">
+      SELECT VISITCAR_NO, CAR_NO, VISITCAR_PHONE, TO_CHAR(VISITCAR_DATE, 'YYYY-MM-DD') AS VISITCAR_DATE, PURPOSE, P.STATUS, APT_NO, P.USER_NO
+      FROM PARKING_VISIT P, MEMBER M
+      WHERE P.USER_NO = M.USER_NO
+      ORDER BY VISITCAR_DATE ASC
+   </select>
+
+   <delete id="deleteVisitCar" parameterType="parkingVisit">
+      DELETE 
+      FROM PARKING_VISIT
+      WHERE CAR_NO = #{carNo}
+      AND VISITCAR_DATE = #{visitCarDate}
+   </delete>
+   
+   <select id="visitCarCount" resultType="_int">
+	   SELECT COUNT(*) 
+	     FROM PARKING_VISIT
+	     JOIN MEMBER USING(USER_NO)
+	    WHERE APT_NO = (SELECT APT_NO
+	    				  FROM MEMBER
+	    				 WHERE USER_NO = #{userNo})
+	      AND TRUNC(VISITCAR_DATE, 'MM') = TRUNC(SYSDATE, 'MM')
+			                   		 
+   </select>
+   
+   
+
+</mapper>
